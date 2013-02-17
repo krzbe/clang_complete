@@ -353,7 +353,7 @@ function! ClangComplete(findstart, base)
     python snippetsReset()
 
     python completions, timer = getCurrentCompletions(vim.eval('a:base'))
-    python vim.command('let l:res = ' + completions)
+    let l:res = pyeval('completions')
     python timer.registerEvent("Load into vimscript")
 
     inoremap <expr> <buffer> <C-Y> <SID>HandlePossibleSelectionCtrlY()
