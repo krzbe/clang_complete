@@ -498,8 +498,8 @@ def getAbbr(strings):
       return chunks.spelling
   return ""
 
-def jumpToLocation(filename, line, column):
-  if filename != vim.current.buffer.name:
+def jumpToLocation(filename, line=None, column=None):
+  if filename and filename != vim.current.buffer.name:
     try:
       vim.command("edit %s" % filename)
     except:
@@ -509,7 +509,28 @@ def jumpToLocation(filename, line, column):
       return
   else:
     vim.command("normal m'")
-  vim.current.window.cursor = (line, column - 1)
+  
+  if line and column:
+    vim.current.window.cursor = (line, column - 1)
+
+def locateFile(params, filename):
+  """
+  Returns file with path. Include directories used to compile current translation unit are used to find correct path
+  """
+  if not params.has_key('args'):
+    return filename
+
+  incs = [i.strip()[2:].strip() for i in params['args'] if i.strip().startswith('-I')]
+
+  if builtinHeaderPath:
+    incs.append(builtinHeaderPath)
+
+  for path in incs:
+    test_path = os.path.join(path,filename)
+    
+    if os.path.exists(test_path):
+      return test_path 
+
 
 def gotoDeclaration():
   global debug
@@ -530,7 +551,12 @@ def gotoDeclaration():
       f = File.from_name(tu, vim.current.buffer.name)
       loc = SourceLocation.from_position(tu, f, line, col + 1)
       cursor = Cursor.from_location(tu, loc)
-      if cursor.referenced is not None and loc != cursor.referenced.location:
+      
+      if cursor.kind == CursorKind.INCLUSION_DIRECTIVE:
+        dest_path = locateFile(params, cursor.displayname)
+        jumpToLocation(dest_path)
+
+      elif cursor.referenced is not None and loc != cursor.referenced.location:
         loc = cursor.referenced.location
         jumpToLocation(loc.file.name, loc.line, loc.column)
 
