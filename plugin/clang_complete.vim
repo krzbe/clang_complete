@@ -297,7 +297,7 @@ function! s:ClangQuickFix()
   syntax clear SpellBad
   syntax clear SpellLocal
 
-  python vim.command('let l:list = ' + str(getCurrentQuickFixList()))
+  let l:list = pyeval('getCurrentQuickFixList()')
   python highlightCurrentDiagnostics()
 
   if g:clang_complete_copen == 1
