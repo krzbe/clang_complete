@@ -331,8 +331,9 @@ endfunction
 let b:col = 0
 
 function! ClangComplete(findstart, base)
+  let l:line = getline('.')
+
   if a:findstart
-    let l:line = getline('.')
     let l:start = col('.') - 1
     let l:wsstart = l:start
     if l:line[l:wsstart - 1] =~ '\s'
@@ -352,17 +353,19 @@ function! ClangComplete(findstart, base)
 
     python snippetsReset()
 
-    python completions, timer = getCurrentCompletions(vim.eval('a:base'))
+    if l:line =~ '#\s*\(include\|import\)'
+      python completions = getIncludeCompletions(vim.eval('a:base'))
+    else
+      python completions, timer = getCurrentCompletions(vim.eval('a:base'))
+    endif
+
     let l:res = pyeval('completions')
-    python timer.registerEvent("Load into vimscript")
 
     inoremap <expr> <buffer> <C-Y> <SID>HandlePossibleSelectionCtrlY()
     augroup ClangComplete
       au CursorMovedI <buffer> call <SID>TriggerSnippet()
     augroup end
     let b:snippet_chosen = 0
-
-    python timer.finish()
 
     if g:clang_debug == 1
       echom 'clang_complete: completion time ' . split(reltimestr(reltime(l:time_start)))[0]
@@ -407,9 +410,6 @@ function! s:TriggerSnippet()
 endfunction
 
 function! s:ShouldComplete()
-  if (getline('.') =~ '#\s*\(include\|import\)')
-    return 0
-  else
     if col('.') == 1
       return 1
     endif
@@ -420,7 +420,6 @@ function! s:ShouldComplete()
       endif
     endfor
     return 1
-  endif
 endfunction
 
 function! s:LaunchCompletion()

@@ -564,6 +564,9 @@ def gotoDeclaration():
 
   timer.finish()
 
+def getIncludeCompletions(base):
+  return ['inc1', 'inc2']
+
 # Manually extracted from Index.h
 # Doing it by hand is long, error prone and horrible, we must find a way
 # to do that automatically.
