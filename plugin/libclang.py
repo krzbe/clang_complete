@@ -525,6 +525,8 @@ def locateFile(params, filename):
   if builtinHeaderPath:
     incs.append(builtinHeaderPath)
 
+  incs.append(os.path.dirname(vim.current.buffer.name))
+
   for path in incs:
     test_path = os.path.join(path,filename)
     
