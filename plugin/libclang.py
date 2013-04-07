@@ -592,13 +592,36 @@ def gotoDeclaration():
 
   timer.finish()
 
+
+def list_dir(path):
+  try:
+    it = os.walk(path).next()
+    return [elem+'/' for elem in it[1]]+it[2]
+  except StopIteration:
+    return []
+
+def get_dir_completion(inc, path):
+  return list_dir(os.path.join(path,inc))
+
 def getIncludeCompletions(base):
-  ret = [ base ]
+  ret = []
+  
+  line = vim.current.line
+  column = int(vim.eval("b:col"))
+
   params = getCompileParams(vim.current.buffer.name)
 
-  #TODO: impl!
   for path in params['includes']:
-    ret.append(path)
+    #TODO: return <>/"" when is not matching (better match also is needed here; it should not match to include "x> )
+    match = re.match(".*(?:include|import)\s*[\"<]([^\">]+)\s*[\">].*", line) 
+    inc=""
+    if match:
+      inc=match.groups()[0]
+
+    ret.extend(get_dir_completion(inc, path))
+
+  if base:
+    ret = filter(lambda x: x.startswith(base), ret)
 
   return ret
 
