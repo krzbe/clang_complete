@@ -603,6 +603,14 @@ def list_dir(path):
 def get_dir_completion(inc, path):
   return list_dir(os.path.join(path,inc))
 
+def get_current_include(line):
+  #TODO: return <>/"" when is not matching (better match also is needed here; it should not match to include "x> )
+  match = re.match(".*(?:include|import)\s*[\"<]([^\">]+)\s*[\">].*", line) 
+  if match:
+    return match.groups()[0].strip()
+
+  return ""
+
 def getIncludeCompletions(base):
   ret = []
   
@@ -612,12 +620,7 @@ def getIncludeCompletions(base):
   params = getCompileParams(vim.current.buffer.name)
 
   for path in params['includes']:
-    #TODO: return <>/"" when is not matching (better match also is needed here; it should not match to include "x> )
-    match = re.match(".*(?:include|import)\s*[\"<]([^\">]+)\s*[\">].*", line) 
-    inc=""
-    if match:
-      inc=match.groups()[0]
-
+    inc = get_current_include(line)
     ret.extend(get_dir_completion(inc, path))
 
   if base:
