@@ -330,8 +330,13 @@ def getCompileParams(fileName):
   if builtinHeaderPath:
     args.append("-I" + builtinHeaderPath)
 
+  incs = getIncludesPaths(params['cwd'], args)
+  incs.append(os.path.dirname(vim.current.buffer.name))
+
   return { 'args' : args,
-           'cwd' : params['cwd'] }
+           'cwd' : params['cwd'],
+           'includes': incs
+           }
 
 def updateCurrentDiagnostics():
   global debug
@@ -513,21 +518,44 @@ def jumpToLocation(filename, line=None, column=None):
   if line and column:
     vim.current.window.cursor = (line, column - 1)
 
+cached_result_store={}
+def make_key(data):
+  return repr(data)
+
+def cached_result(func):
+  def wrapper(*args):
+    key = make_key(args)
+    if key in cached_result_store:
+      return cached_result_store[key]
+
+    ret = func(*args)
+    cached_result_store[key] = ret
+    return ret
+
+  return wrapper
+
+@cached_result
+def getIncludesPaths(compiler_path, args):
+  def translate_include_path(path):
+    stripped_path = path.strip()[2:].strip()
+    if compiler_path is not None:
+      return os.path.join(compiler_path, stripped_path)
+
+    return stripped_path
+
+  incs = [ translate_include_path(i) for i in args if i.strip().startswith('-I')]
+
+  return incs
+
+
 def locateFile(params, filename):
   """
   Returns file with path. Include directories used to compile current translation unit are used to find correct path
   """
-  if not params.has_key('args'):
+  if not params.has_key('includes'):
     return filename
 
-  incs = [i.strip()[2:].strip() for i in params['args'] if i.strip().startswith('-I')]
-
-  if builtinHeaderPath:
-    incs.append(builtinHeaderPath)
-
-  incs.append(os.path.dirname(vim.current.buffer.name))
-
-  for path in incs:
+  for path in params['includes']:
     test_path = os.path.join(path,filename)
     
     if os.path.exists(test_path):
@@ -565,7 +593,14 @@ def gotoDeclaration():
   timer.finish()
 
 def getIncludeCompletions(base):
-  return ['inc1', 'inc2']
+  ret = [ base ]
+  params = getCompileParams(vim.current.buffer.name)
+
+  #TODO: impl!
+  for path in params['includes']:
+    ret.append(path)
+
+  return ret
 
 # Manually extracted from Index.h
 # Doing it by hand is long, error prone and horrible, we must find a way
