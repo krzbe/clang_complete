@@ -575,7 +575,7 @@ def gotoDeclaration():
   inc = re.match("\s*#\s*(:?include|import)\s*[\"<]([^\">]*)[\">]\s*", vim.current.line)
 
   if inc:
-    dest_path = locateFile(params, inc.groups()[1])
+    dest_path = locateFile(params, inc.groups()[1].strip())
     jumpToLocation(dest_path)
     return
 
