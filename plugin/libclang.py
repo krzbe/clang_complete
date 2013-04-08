@@ -3,6 +3,7 @@ import vim
 import time
 import threading
 import os
+import posixpath
 
 # Check if libclang is able to find the builtin include files.
 #
@@ -604,23 +605,27 @@ def get_dir_completion(inc, path):
   return list_dir(os.path.join(path,inc))
 
 def get_current_include(line):
-  #TODO: return <>/"" when is not matching (better match also is needed here; it should not match to include "x> )
-  match = re.match(".*(?:include|import)\s*[\"<]([^\">]+)\s*[\">].*", line) 
+  col = vim.current.window.cursor[1]
+  match = re.match(".*(?:include|import)\s*[\"<]([^\"\s>]*)$", line[:col]) 
+  
   if match:
-    return match.groups()[0].strip()
+    return posixpath.dirname(match.groups()[0].strip())
 
-  return ""
+  return None 
+
 
 def getIncludeCompletions(base):
   ret = []
-  
-  line = vim.current.line
-  column = int(vim.eval("b:col"))
 
   params = getCompileParams(vim.current.buffer.name)
+  
+  line = vim.current.line
+  inc = get_current_include(line)
+
+  if inc is None:
+    return []
 
   for path in params['includes']:
-    inc = get_current_include(line)
     ret.extend(get_dir_completion(inc, path))
 
   if base:

@@ -437,7 +437,7 @@ function! s:LaunchCompletion()
 endfunction
 
 function! s:CompleteDot()
-  if g:clang_complete_auto == 1
+  if g:clang_complete_auto == 1 && ! getline('.') =~ "^\s*#\s*include|import"
     return '.' . s:LaunchCompletion()
   endif
   return '.'
