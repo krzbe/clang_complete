@@ -553,7 +553,7 @@ def locateFile(params, filename):
   """
   Returns file with path. Include directories used to compile current translation unit are used to find correct path
   """
-  if not params.has_key('includes'):
+  if not filename or not params.has_key('includes'):
     None
 
   for path in params['includes']:
@@ -562,7 +562,6 @@ def locateFile(params, filename):
     if os.path.exists(test_path):
       return test_path
 
-  print "ERROR: Couldn't find \"" + filename + "\" file"
   return None
 
 
@@ -576,6 +575,11 @@ def gotoDeclaration():
 
   if inc:
     dest_path = locateFile(params, inc.groups()[1].strip())
+
+    if not dest_path:
+      print "Couldn't find requested file"
+      return 
+
     jumpToLocation(dest_path)
     return
 
