@@ -136,6 +136,7 @@ function! s:ClangCompleteInit()
 
   python snippetsInit()
 
+  inoremap <expr> <buffer> / <SID>LaunchIncludeCompletion()
   inoremap <expr> <buffer> <C-X><C-U> <SID>LaunchCompletion()
   inoremap <expr> <buffer> . <SID>CompleteDot()
   inoremap <expr> <buffer> > <SID>CompleteArrow()
@@ -436,8 +437,22 @@ function! s:LaunchCompletion()
   return l:result
 endfunction
 
+function! s:InIncludeStmt()
+  if getline('.') =~ '#\s*\(include\|import\)'
+    return 1
+  endif
+  return 0
+endfunction
+
+function! s:LaunchIncludeCompletion()
+  if g:clang_complete_auto == 1 && s:InIncludeStmt()
+    return '/' . s:LaunchCompletion()
+  endif
+  return '/' 
+endfunction
+
 function! s:CompleteDot()
-  if g:clang_complete_auto == 1 && ! getline('.') =~ "^\s*#\s*include|import"
+  if g:clang_complete_auto == 1 && ! s:InIncludeStmt()
     return '.' . s:LaunchCompletion()
   endif
   return '.'
