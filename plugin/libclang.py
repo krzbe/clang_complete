@@ -554,19 +554,31 @@ def locateFile(params, filename):
   Returns file with path. Include directories used to compile current translation unit are used to find correct path
   """
   if not params.has_key('includes'):
-    return filename
+    None
 
   for path in params['includes']:
     test_path = os.path.join(path,filename)
     
     if os.path.exists(test_path):
-      return test_path 
+      return test_path
+
+  print "ERROR: Couldn't find \"" + filename + "\" file"
+  return None
 
 
 def gotoDeclaration():
   global debug
   debug = int(vim.eval("g:clang_debug")) == 1
   params = getCompileParams(vim.current.buffer.name)
+
+  curline = vim.current.line
+  inc = re.match("\s*#\s*(:?include|import)\s*[\"<]([^\">]*)[\">]\s*", vim.current.line)
+
+  if inc:
+    dest_path = locateFile(params, inc.groups()[1])
+    jumpToLocation(dest_path)
+    return
+
   line, col = vim.current.window.cursor
   timer = CodeCompleteTimer(debug, vim.current.buffer.name, line, col, params)
 
@@ -582,12 +594,8 @@ def gotoDeclaration():
       f = File.from_name(tu, vim.current.buffer.name)
       loc = SourceLocation.from_position(tu, f, line, col + 1)
       cursor = Cursor.from_location(tu, loc)
-      
-      if cursor.kind == CursorKind.INCLUSION_DIRECTIVE:
-        dest_path = locateFile(params, cursor.displayname)
-        jumpToLocation(dest_path)
 
-      elif cursor.referenced is not None and loc != cursor.referenced.location:
+      if cursor.referenced is not None and loc != cursor.referenced.location:
         loc = cursor.referenced.location
         jumpToLocation(loc.file.name, loc.line, loc.column)
 
