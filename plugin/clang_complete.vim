@@ -452,7 +452,7 @@ function! s:LaunchIncludeCompletion()
 endfunction
 
 function! s:CompleteDot()
-  if g:clang_complete_auto == 1 && ! s:InIncludeStmt()
+  if g:clang_complete_auto == 1 && ! s:InIncludeStmt() && getline('.')[ col('.') - 2]!='.'
     return '.' . s:LaunchCompletion()
   endif
   return '.'
