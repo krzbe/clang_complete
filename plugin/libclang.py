@@ -618,7 +618,7 @@ def get_dir_completion(inc, path):
 
 def get_current_include(line):
   col = vim.current.window.cursor[1]
-  match = re.match(".*(?:include|import)\s*[\"<]([^\"\s>]*)$", line[:col]) 
+  match = re.match(".*(?:include|import)\s*[\"<]\s*([^\"\s>]*)$", line[:col]) 
   
   if match:
     return posixpath.dirname(match.groups()[0].strip())
