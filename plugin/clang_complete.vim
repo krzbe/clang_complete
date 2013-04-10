@@ -376,9 +376,14 @@ function! ClangComplete(findstart, base)
 endfunction
 
 function! s:HandlePossibleSelectionEnter()
-  if pumvisible()
-    let b:snippet_chosen = 1
-    return "\<C-Y>"
+ if pumvisible()
+   if s:InIncludeStmt()
+     call feedkeys("\<C-X>\<C-U>")
+     return "\<CR>"
+   endif
+   
+   let b:snippet_chosen = 1
+   return "\<C-Y>"
   end
   return "\<CR>"
 endfunction
