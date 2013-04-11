@@ -4,6 +4,7 @@ import time
 import threading
 import os
 import posixpath
+import re
 
 # Check if libclang is able to find the builtin include files.
 #
@@ -519,24 +520,10 @@ def jumpToLocation(filename, line=None, column=None):
   if line and column:
     vim.current.window.cursor = (line, column - 1)
 
-cached_result_store={}
-def make_key(data):
-  return repr(data)
-
-def cached_result(func):
-  def wrapper(*args):
-    key = make_key(args)
-    if key in cached_result_store:
-      return cached_result_store[key]
-
-    ret = func(*args)
-    cached_result_store[key] = ret
-    return ret
-
-  return wrapper
-
-@cached_result
 def getIncludesPaths(compiler_path, args):
+  """
+  Extracts includes paths from compiler arguments and compiler path
+  """
   def translate_include_path(path):
     stripped_path = path.strip()[2:].strip()
     if compiler_path is not None:
@@ -616,26 +603,45 @@ def list_dir(path):
 def get_dir_completion(inc, path):
   return list_dir(os.path.join(path,inc))
 
+current_include_regex = re.compile("\s*#\s*(?:include|import)\s*[\"<]\s*([^\"\s>]*)$")
+
 def get_current_include(line):
+  """
+  Returns current content of include directive
+  """
   col = vim.current.window.cursor[1]
-  match = re.match(".*(?:include|import)\s*[\"<]\s*([^\"\s>]*)$", line[:col]) 
+  match = current_include_regex.match(line[:col]) 
   
   if match:
-    return posixpath.dirname(match.groups()[0].strip())
+    return (match.groups()[0].strip(), match.start(1))
 
-  return None 
+  return (None, None)
 
+def getIncludeStartPoint():
+  line = vim.current.line
+  
+  path, num = get_current_include(line)
+  
+  if not path or not num:
+    return vim.current.window.cursor[1]
+
+  dirlen = len(posixpath.dirname(path))
+  if dirlen:
+    dirlen+=1
+  
+  return num + dirlen
 
 def getIncludeCompletions(base):
   ret = []
-
   params = getCompileParams(vim.current.buffer.name)
   
   line = vim.current.line
-  inc = get_current_include(line)
+  current_inc, _ = get_current_include(line)
 
-  if inc is None:
+  if current_inc is None:
     return []
+
+  inc = posixpath.dirname(current_inc)
 
   for path in params['includes']:
     ret.extend(get_dir_completion(inc, path))

@@ -335,6 +335,9 @@ function! ClangComplete(findstart, base)
   let l:line = getline('.')
 
   if a:findstart
+    if s:InIncludeStmt()
+      return pyeval('getIncludeStartPoint()')
+    endif
     let l:start = col('.') - 1
     let l:wsstart = l:start
     if l:line[l:wsstart - 1] =~ '\s'
