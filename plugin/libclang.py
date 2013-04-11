@@ -551,6 +551,7 @@ def locateFile(params, filename):
 
   return None
 
+current_include_regex = re.compile("\s*#\s*(?:include|import)\s*[\"<]\s*([^\"\s>]*)")
 
 def gotoDeclaration():
   global debug
@@ -558,10 +559,10 @@ def gotoDeclaration():
   params = getCompileParams(vim.current.buffer.name)
 
   curline = vim.current.line
-  inc = re.match("\s*#\s*(:?include|import)\s*[\"<]([^\">]*)[\">]\s*", vim.current.line)
+  inc = current_include_regex.match(vim.current.line)
 
   if inc:
-    dest_path = locateFile(params, inc.groups()[1].strip())
+    dest_path = locateFile(params, inc.groups()[0].strip())
 
     if not dest_path:
       print "Couldn't find requested file"
@@ -592,7 +593,6 @@ def gotoDeclaration():
 
   timer.finish()
 
-
 def list_dir(path):
   try:
     it = os.walk(path).next()
@@ -603,7 +603,6 @@ def list_dir(path):
 def get_dir_completion(inc, path):
   return list_dir(os.path.join(path,inc))
 
-current_include_regex = re.compile("\s*#\s*(?:include|import)\s*[\"<]\s*([^\"\s>]*)$")
 
 def get_current_include(line):
   """
