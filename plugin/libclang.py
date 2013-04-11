@@ -558,7 +558,6 @@ def gotoDeclaration():
   debug = int(vim.eval("g:clang_debug")) == 1
   params = getCompileParams(vim.current.buffer.name)
 
-  curline = vim.current.line
   inc = current_include_regex.match(vim.current.line)
 
   if inc:

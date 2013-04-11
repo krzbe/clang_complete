@@ -333,9 +333,10 @@ let b:col = 0
 
 function! ClangComplete(findstart, base)
   let l:line = getline('.')
+  let l:in_include = s:InIncludeStmt()
 
   if a:findstart
-    if s:InIncludeStmt()
+    if l:in_include
       return pyeval('getIncludeStartPoint()')
     endif
     let l:start = col('.') - 1
@@ -357,7 +358,7 @@ function! ClangComplete(findstart, base)
 
     python snippetsReset()
 
-    if l:line =~ '#\s*\(include\|import\)'
+    if l:in_include
       python completions = getIncludeCompletions(vim.eval('a:base'))
     else
       python completions, timer = getCurrentCompletions(vim.eval('a:base'))
